@@ -6,6 +6,13 @@ import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/V
 
 contract Raffle is VRFConsumerBaseV2Plus {
     error Raffle__NotEnoughETHEntered();
+    error Raffle__TransferFailed();
+    error Raffle__RaffleNotOpen();
+
+    enum RaffleState {
+        OPEN,
+        CALCULATING
+    }
 
     uint256 private immutable i_entranceFee;
     uint256 private immutable i_interval;
@@ -17,6 +24,8 @@ contract Raffle is VRFConsumerBaseV2Plus {
 
     address payable[] private s_players;
     uint256 private s_lastTimeStamp;
+    address payable private s_recentWinner;
+    RaffleState private s_raffleState;
 
     event RaffleEntered(address indexed player);
 
@@ -40,6 +49,10 @@ contract Raffle is VRFConsumerBaseV2Plus {
         if (msg.value < i_entranceFee) {
             revert Raffle__NotEnoughETHEntered();
         }
+        if(s_raffleState != RaffleState.OPEN){
+            revert Raffle__RaffleNotOpen();
+        }
+
 
         s_players.push(payable(msg.sender));
         emit RaffleEntered(msg.sender);
@@ -51,29 +64,41 @@ contract Raffle is VRFConsumerBaseV2Plus {
         }
 
         // Logic to pick a winner using Chainlink VRF
-
-        VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient
-            .RandomWordsRequest({
-                keyHash: i_gasLane, // Replace with actual key hash
-                subId: i_subscriptionId, // Replace with actual subscription ID
-                requestConfirmations: REQUEST_CONFIRMATIONS,
-                callbackGasLimit: i_callbackGasLimit,
-                numWords: NUM_WORDS,
-                extraArgs: VRFV2PlusClient._argsToBytes(
-                    // Set nativePayment to true to pay for VRF requests with Sepolia ETH instead of LINK
-                    VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
-                )
-            });
+        s_raffleState = RaffleState.CALCULATING;
+        VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient.RandomWordsRequest({
+            keyHash: i_gasLane, // Replace with actual key hash
+            subId: i_subscriptionId, // Replace with actual subscription ID
+            requestConfirmations: REQUEST_CONFIRMATIONS,
+            callbackGasLimit: i_callbackGasLimit,
+            numWords: NUM_WORDS,
+            extraArgs: VRFV2PlusClient._argsToBytes(
+                // Set nativePayment to true to pay for VRF requests with Sepolia ETH instead of LINK
+                VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
+            )
+        });
 
         uint256 requestId = s_vrfCoordinator.requestRandomWords(request);
     }
+
+    function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal virtual override {
+
+        uint256 indexOfWinner = randomWords[0] % s_players.length();
+        address payable recentWinner = s_players[indexOfWinner];
+        s_recentWinner = recentWinner;
+        s_raffleState = RaffleState.OPEN;
+
+        (bool success,) = recentWinner.call{value: address(this).balance}("");
+        if(!success) {
+            revert Raffle__TransferFailed();
+        }
+    }
+
+
+
+    /* Getter Functions */
 
     function getEntranceFee() public view returns (uint256) {
         return i_entranceFee;
     }
 
-    function fulfillRandomWords(
-        uint256 requestId,
-        uint256[] calldata randomWords
-    ) internal virtual override {}
 }
