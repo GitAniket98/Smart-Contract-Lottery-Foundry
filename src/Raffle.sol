@@ -8,6 +8,11 @@ contract Raffle is VRFConsumerBaseV2Plus {
     error Raffle__NotEnoughETHEntered();
     error Raffle__TransferFailed();
     error Raffle__RaffleNotOpen();
+    error Raffle__UpkeepNotNeeded(
+        uint256 currentBalance,
+        uint256 numPlayers,
+        uint256 s_raffleState
+    );
 
     enum RaffleState {
         OPEN,
@@ -83,7 +88,15 @@ contract Raffle is VRFConsumerBaseV2Plus {
         return (upKeepNeeded, "");
     }
 
-    function pickWinner() external {
+    function performUpkeep(bytes calldata /* performData */) external {
+        (bool upKeepNeeded, ) = checkUpkeep("");
+        if (!upKeepNeeded) {
+            revert Raffle__UpkeepNotNeeded(
+                address(this).balance,
+                s_players.length,
+                uint256(s_raffleState)
+            );
+        }
         if ((block.timestamp - s_lastTimeStamp) < i_interval) {
             revert();
         }
