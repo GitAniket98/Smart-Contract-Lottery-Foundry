@@ -28,6 +28,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
     RaffleState private s_raffleState;
 
     event RaffleEntered(address indexed player);
+    event WinnerPicked(address indexed winner);
 
     constructor(
         uint256 entranceFee,
@@ -49,13 +50,37 @@ contract Raffle is VRFConsumerBaseV2Plus {
         if (msg.value < i_entranceFee) {
             revert Raffle__NotEnoughETHEntered();
         }
-        if(s_raffleState != RaffleState.OPEN){
+        if (s_raffleState != RaffleState.OPEN) {
             revert Raffle__RaffleNotOpen();
         }
 
-
         s_players.push(payable(msg.sender));
         emit RaffleEntered(msg.sender);
+    }
+
+    /**
+     * @dev This is the function that the Chainlink Keeper nodes call
+     * they look for `upKeepNeeded` to return true. The following should be true
+     * in order to return true:
+     * 1. The time interval has passed between raffle runs.
+     * 2. The raffle is in an "open" state.
+     * 3. The contract has Balance.
+     * 4. Implicitly, your subscription is funded with LINK.
+     * @param - ignored
+     * @return upKeepNeeded
+     * @return - ignored
+     */
+
+    function checkUpkeep(
+        bytes memory /* checkData */
+    ) public view returns (bool upKeepNeeded, bytes memory /* performData */) {
+        bool timeHasPassed = (block.timestamp - s_lastTimeStamp) >= i_interval;
+        bool isOpen = (s_raffleState == RaffleState.OPEN);
+        bool hasPlayers = s_players.length > 0;
+        bool hasBalance = address(this).balance > 0;
+
+        upKeepNeeded = (timeHasPassed && isOpen && hasPlayers && hasBalance);
+        return (upKeepNeeded, "");
     }
 
     function pickWinner() external {
@@ -65,40 +90,43 @@ contract Raffle is VRFConsumerBaseV2Plus {
 
         // Logic to pick a winner using Chainlink VRF
         s_raffleState = RaffleState.CALCULATING;
-        VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient.RandomWordsRequest({
-            keyHash: i_gasLane, // Replace with actual key hash
-            subId: i_subscriptionId, // Replace with actual subscription ID
-            requestConfirmations: REQUEST_CONFIRMATIONS,
-            callbackGasLimit: i_callbackGasLimit,
-            numWords: NUM_WORDS,
-            extraArgs: VRFV2PlusClient._argsToBytes(
-                // Set nativePayment to true to pay for VRF requests with Sepolia ETH instead of LINK
-                VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
-            )
-        });
+        VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient
+            .RandomWordsRequest({
+                keyHash: i_gasLane, // Replace with actual key hash
+                subId: i_subscriptionId, // Replace with actual subscription ID
+                requestConfirmations: REQUEST_CONFIRMATIONS,
+                callbackGasLimit: i_callbackGasLimit,
+                numWords: NUM_WORDS,
+                extraArgs: VRFV2PlusClient._argsToBytes(
+                    // Set nativePayment to true to pay for VRF requests with Sepolia ETH instead of LINK
+                    VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
+                )
+            });
 
         uint256 requestId = s_vrfCoordinator.requestRandomWords(request);
     }
 
-    function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal virtual override {
-
-        uint256 indexOfWinner = randomWords[0] % s_players.length();
+    function fulfillRandomWords(
+        uint256 requestId,
+        uint256[] calldata randomWords
+    ) internal virtual override {
+        uint256 indexOfWinner = randomWords[0] % s_players.length;
         address payable recentWinner = s_players[indexOfWinner];
         s_recentWinner = recentWinner;
         s_raffleState = RaffleState.OPEN;
+        s_players = new address payable[](0);
 
-        (bool success,) = recentWinner.call{value: address(this).balance}("");
-        if(!success) {
+        (bool success, ) = recentWinner.call{value: address(this).balance}("");
+        if (!success) {
             revert Raffle__TransferFailed();
         }
+
+        emit WinnerPicked(s_recentWinner);
     }
-
-
 
     /* Getter Functions */
 
     function getEntranceFee() public view returns (uint256) {
         return i_entranceFee;
     }
-
 }
