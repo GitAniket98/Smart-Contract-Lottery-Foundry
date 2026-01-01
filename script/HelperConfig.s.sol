@@ -12,10 +12,10 @@ abstract contract CodeConstants {
     // VRF Mock Values
     uint96 public constant MOCK_BASE_FEE = 0.25 ether;
     uint96 public constant MOCK_GAS_PRICE_LINK = 1e9; // 0.000000001 LINK per gas
-    uint96 public constant MOCK_WEI_PER_UINT_LINK = 4e15; // 1 LINK = 10^18 Wei
+    int256 public constant MOCK_WEI_PER_UINT_LINK = 4e15; // 1 LINK = 10^18 Wei
 }
 
-contract HelperConfig is Script {
+contract HelperConfig is Script, CodeConstants {
     error HelperConfig__InvalidChainId();
 
     struct NetworkConfig {
@@ -34,13 +34,13 @@ contract HelperConfig is Script {
         networkConfigs[OP_SEPOLIA_CHAINID] = getOpSepoliaConfig();
     }
 
-    function getConfig() public returns (NetwworkConfig memory) {
+    function getConfig() public returns (NetworkConfig memory) {
         return networkConfigs[block.chainid];
     }
 
     function getConfigByChainId(
         uint256 chainId
-    ) public view returns (NetworkConfig memory) {
+    ) public returns (NetworkConfig memory) {
         if (networkConfigs[chainId].vrfCoordinator != address(0)) {
             return networkConfigs[chainId];
         } else if (chainId == LOCAL_CHAINID) {
@@ -50,7 +50,7 @@ contract HelperConfig is Script {
         }
     }
 
-    function getOpSepoliaConfig() public pure returns (NetworkConfig memery) {
+    function getOpSepoliaConfig() public pure returns (NetworkConfig memory) {
         return
             NetworkConfig({
                 entranceFee: 0.01 ether,

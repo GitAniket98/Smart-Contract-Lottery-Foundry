@@ -8,7 +8,7 @@ import {HelperConfig} from "./HelperConfig.s.sol";
 contract DeployRaffle is Script {
     function run() external {}
 
-    function deployContract() public returns (Raffle) {
+    function deployContract() public returns (Raffle, HelperConfig) {
         HelperConfig helperConfig = new HelperConfig();
 
         HelperConfig.NetworkConfig memory networkConfig = helperConfig
@@ -24,6 +24,6 @@ contract DeployRaffle is Script {
             networkConfig.callbackGasLimit
         );
         vm.stopBroadcast();
-        return raffle;
+        return (raffle, helperConfig);
     }
 }
