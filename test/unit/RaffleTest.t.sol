@@ -20,21 +20,51 @@ contract RaffleTest is Test {
     address public PLAYER = makeAddr("player");
     uint256 public constant STARTING_USER_BALANCE = 10 ether;
 
+    event RaffleEntered(address indexed player);
+    event WinnerPicked(address indexed winner);
+
     function setUp() external {
         DeployRaffle deployer = new DeployRaffle();
         (raffle, helperConfig) = deployer.deployContract();
         HelperConfig.NetworkConfig memory networkConfig = helperConfig
-            .getConfig();
+            .getConfigByChainId(block.chainid);
         entranceFee = networkConfig.entranceFee;
         interval = networkConfig.interval;
         gasLane = networkConfig.gasLane;
         vrfCoordinator = networkConfig.vrfCoordinator;
         subscriptionId = networkConfig.subscriptionId;
         callbackGasLimit = networkConfig.callbackGasLimit;
+
+        vm.deal(PLAYER, STARTING_USER_BALANCE);
     }
 
     function testRaffleInitializesInOpenState() public view {
         console.log("Raffle State:", uint256(raffle.getRaffleState()));
         assert(raffle.getRaffleState() == Raffle.RaffleState.OPEN);
+    }
+
+    function testRaffleRevertsWhenYouDontPayEnough() public {
+        //Arrange
+        vm.prank(PLAYER);
+
+        //Act / Assert
+        vm.expectRevert(Raffle.Raffle__NotEnoughETHEntered.selector);
+        raffle.enterRaffle();
+    }
+
+    function testRaffleRecordsPlayerWhenTheyEnter() public {
+        vm.prank(PLAYER);
+
+        raffle.enterRaffle{value: entranceFee}();
+        address playerRecorded = raffle.getPlayer(0);
+        assert(playerRecorded == PLAYER);
+    }
+
+    function testEnteringRaffleEmitsEvent() public {
+        vm.prank(PLAYER);
+
+        vm.expectEmit(true, false, false, false, address(raffle));
+        emit RaffleEntered(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
     }
 }
