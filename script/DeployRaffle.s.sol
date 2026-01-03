@@ -12,7 +12,7 @@ contract DeployRaffle is Script {
         HelperConfig helperConfig = new HelperConfig();
 
         HelperConfig.NetworkConfig memory networkConfig = helperConfig
-            .getConfig();
+            .getConfigByChainId(block.chainid);
 
         vm.startBroadcast();
         Raffle raffle = new Raffle(
