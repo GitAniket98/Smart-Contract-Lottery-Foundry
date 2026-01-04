@@ -27,7 +27,7 @@ contract RaffleTest is Test {
         DeployRaffle deployer = new DeployRaffle();
         (raffle, helperConfig) = deployer.deployContract();
         HelperConfig.NetworkConfig memory networkConfig = helperConfig
-            .getConfigByChainId(block.chainid);
+            .getConfig();
         entranceFee = networkConfig.entranceFee;
         interval = networkConfig.interval;
         gasLane = networkConfig.gasLane;
@@ -65,6 +65,19 @@ contract RaffleTest is Test {
 
         vm.expectEmit(true, false, false, false, address(raffle));
         emit RaffleEntered(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+    }
+
+    function testDontAllowEntranceWhenRaffleIsCalculating() public {
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll(block.number + 1);
+        raffle.performUpkeep("");
+
+        vm.expectRevert(Raffle.Raffle__RaffleNotOpen.selector);
+        vm.prank(PLAYER);
         raffle.enterRaffle{value: entranceFee}();
     }
 }

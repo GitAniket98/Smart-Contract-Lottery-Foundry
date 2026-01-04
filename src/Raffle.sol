@@ -116,7 +116,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
                 )
             });
 
-        //uint256 requestId = s_vrfCoordinator.requestRandomWords(request);
+        uint256 requestId = s_vrfCoordinator.requestRandomWords(request);
     }
 
     function fulfillRandomWords(

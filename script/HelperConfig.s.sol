@@ -34,8 +34,8 @@ contract HelperConfig is Script, CodeConstants {
         networkConfigs[OP_SEPOLIA_CHAINID] = getOpSepoliaConfig();
     }
 
-    function getConfig() public view returns (NetworkConfig memory) {
-        return networkConfigs[block.chainid];
+    function getConfig() public returns (NetworkConfig memory) {
+        return getConfigByChainId(block.chainid);
     }
 
     function getConfigByChainId(
