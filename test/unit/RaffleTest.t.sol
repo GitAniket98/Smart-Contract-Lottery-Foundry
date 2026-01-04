@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Test, console} from "forge-std/Test.sol";
+import {Test, console, Vm} from "forge-std/Test.sol";
 import {Raffle} from "../../src/Raffle.sol";
 import {DeployRaffle} from "../../script/DeployRaffle.s.sol";
 import {HelperConfig} from "../../script/HelperConfig.s.sol";
@@ -22,6 +22,14 @@ contract RaffleTest is Test {
 
     event RaffleEntered(address indexed player);
     event WinnerPicked(address indexed winner);
+
+    modifier raffleEntered() {
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll(block.number + 1);
+        _;
+    }
 
     function setUp() external {
         DeployRaffle deployer = new DeployRaffle();
@@ -72,14 +80,13 @@ contract RaffleTest is Test {
         raffle.enterRaffle{value: entranceFee}();
     }
 
-    function testDontAllowEntranceWhenRaffleIsCalculating() public {
-        vm.prank(PLAYER);
-        raffle.enterRaffle{value: entranceFee}();
-
-        vm.warp(block.timestamp + interval + 1);
-        vm.roll(block.number + 1);
+    function testDontAllowEntranceWhenRaffleIsCalculating()
+        public
+        raffleEntered
+    {
+        // Act
         raffle.performUpkeep("");
-
+        // Assert
         vm.expectRevert(Raffle.Raffle__RaffleNotOpen.selector);
         vm.prank(PLAYER);
         raffle.enterRaffle{value: entranceFee}();
@@ -99,12 +106,7 @@ contract RaffleTest is Test {
         assert(!upkeepNeeded);
     }
 
-    function testCheckUpkeepReturnsFalseIfRaffleNotOpen() public {
-        // Arrange
-        vm.prank(PLAYER);
-        raffle.enterRaffle{value: entranceFee}();
-        vm.warp(block.timestamp + interval + 1);
-        vm.roll(block.number + 1);
+    function testCheckUpkeepReturnsFalseIfRaffleNotOpen() public raffleEntered {
         raffle.performUpkeep("");
         // Act
         (bool upkeepNeeded, ) = raffle.checkUpkeep("");
@@ -123,12 +125,7 @@ contract RaffleTest is Test {
         assert(!upkeepNeeded);
     }
 
-    function testUpkeepReturnsTrueWhenParametersAreGood() public {
-        // Arrange
-        vm.prank(PLAYER);
-        raffle.enterRaffle{value: entranceFee}();
-        vm.warp(block.timestamp + interval + 1);
-        vm.roll(block.number + 1);
+    function testUpkeepReturnsTrueWhenParametersAreGood() public raffleEntered {
         // Act
         (bool upkeepNeeded, ) = raffle.checkUpkeep("");
         // Assert
@@ -139,12 +136,10 @@ contract RaffleTest is Test {
                               PERFORMUPKEEP
     //////////////////////////////////////////////////////////////*/
 
-    function testPerformUpkeepCanonlyRunIfCheckUpkeepIsTrue() public {
-        //Arrange
-        vm.prank(PLAYER);
-        raffle.enterRaffle{value: entranceFee}();
-        vm.warp(block.timestamp + interval + 1);
-        vm.roll(block.number + 1);
+    function testPerformUpkeepCanonlyRunIfCheckUpkeepIsTrue()
+        public
+        raffleEntered
+    {
         //Act / Assert
         raffle.performUpkeep("");
     }
@@ -169,5 +164,20 @@ contract RaffleTest is Test {
             )
         );
         raffle.performUpkeep("");
+    }
+
+    function testPerformUpKeepUpdatesRaffleStateAndEmitsRequestId()
+        public
+        raffleEntered
+    {
+        vm.recordLogs();
+        raffle.performUpkeep("");
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+        bytes32 requestIdTopic = entries[1].topics[1];
+
+        Raffle.RaffleState raffleState = raffle.getRaffleState();
+
+        assert(uint256(requestIdTopic) > 0);
+        assert(uint256(raffleState) == 1); //CALCULATING
     }
 }
