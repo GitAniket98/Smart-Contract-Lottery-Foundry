@@ -1,39 +1,40 @@
 Compiling 49 files with Solc 0.8.30
-Solc 0.8.30 finished in 3.13s
-Compiler run successful with warnings:
-Warning (2072): Unused local variable.
-   --> src/Raffle.sol:119:9:
-    |
-119 |         uint256 requestId = s_vrfCoordinator.requestRandomWords(request);
-    |         ^^^^^^^^^^^^^^^^^
-
+Solc 0.8.30 finished in 3.39s
+Compiler run successful!
 Analysing contracts...
 Running tests...
 
-Ran 7 tests for test/unit/RaffleTest.t.sol:RaffleTest
-[PASS] testCheckUpkeepReturnsFalseIfNoBalance() (gas: 20904)
-[PASS] testCheckUpkeepReturnsFalseIfRaffleNotOpen() (gas: 224997)
-[PASS] testDontAllowEntranceWhenRaffleIsCalculating() (gas: 229991)
-[PASS] testEnteringRaffleEmitsEvent() (gas: 69753)
-[PASS] testRaffleInitializesInOpenState() (gas: 12818)
-[PASS] testRaffleRecordsPlayerWhenTheyEnter() (gas: 69576)
-[PASS] testRaffleRevertsWhenYouDontPayEnough() (gas: 11209)
-Suite result: ok. 7 passed; 0 failed; 0 skipped; finished in 22.65ms (8.39ms CPU time)
+Ran 14 tests for test/unit/RaffleTest.t.sol:RaffleTest
+[PASS] testCheckUpkeepReturnsFalseIfNoBalance() (gas: 20816)
+[PASS] testCheckUpkeepReturnsFalseIfRaffleNotOpen() (gas: 225910)
+[PASS] testDontAllowEntranceWhenRaffleIsCalculating() (gas: 230970)
+[PASS] testEnteringRaffleEmitsEvent() (gas: 69709)
+[PASS] testFullfillrandomWordsCanOnlyBeCalledAfterPerformUpkeep(uint256) (runs: 512, μ: 82318, ~: 82318)
+[PASS] testFullfillrandomWordsPicksWinnerResetsAndSendMoney() (gas: 327375)
+[PASS] testPerformUpKeepUpdatesRaffleStateAndEmitsRequestId() (gas: 230302)
+[PASS] testPerformUpkeepCanonlyRunIfCheckUpkeepIsTrue() (gas: 221957)
+[PASS] testPerformUpkeepRevertsIfCheckUpkeepIsFalse() (gas: 75293)
+[PASS] testRaffleInitializesInOpenState() (gas: 12864)
+[PASS] testRaffleRecordsPlayerWhenTheyEnter() (gas: 69466)
+[PASS] testRaffleRevertsWhenYouDontPayEnough() (gas: 11143)
+[PASS] testUpkeepReturnsFalseIfEnoughTimeHasntPassed() (gas: 76143)
+[PASS] testUpkeepReturnsTrueWhenParametersAreGood() (gas: 76817)
+Suite result: ok. 14 passed; 0 failed; 0 skipped; finished in 73.61ms (56.51ms CPU time)
 
-Ran 1 test suite in 88.83ms (22.65ms CPU time): 7 tests passed, 0 failed, 0 skipped (7 total tests)
+Ran 1 test suite in 154.06ms (73.61ms CPU time): 14 tests passed, 0 failed, 0 skipped (14 total tests)
 
-╭---------------------------+-----------------+-----------------+---------------+----------------╮
-| File                      | % Lines         | % Statements    | % Branches    | % Funcs        |
-+================================================================================================+
-| script/DeployRaffle.s.sol | 89.47% (17/19)  | 95.65% (22/23)  | 100.00% (1/1) | 50.00% (1/2)   |
-|---------------------------+-----------------+-----------------+---------------+----------------|
-| script/HelperConfig.s.sol | 80.95% (17/21)  | 90.00% (18/20)  | 40.00% (2/5)  | 60.00% (3/5)   |
-|---------------------------+-----------------+-----------------+---------------+----------------|
-| script/Interactions.s.sol | 49.06% (26/53)  | 48.98% (24/49)  | 50.00% (1/2)  | 33.33% (3/9)   |
-|---------------------------+-----------------+-----------------+---------------+----------------|
-| src/Raffle.sol            | 69.57% (32/46)  | 68.89% (31/45)  | 40.00% (2/5)  | 75.00% (6/8)   |
-|---------------------------+-----------------+-----------------+---------------+----------------|
-| test/mocks/LinkToken.sol  | 11.76% (2/17)   | 7.69% (1/13)    | 0.00% (0/1)   | 20.00% (1/5)   |
-|---------------------------+-----------------+-----------------+---------------+----------------|
-| Total                     | 60.26% (94/156) | 64.00% (96/150) | 42.86% (6/14) | 48.28% (14/29) |
-╰---------------------------+-----------------+-----------------+---------------+----------------╯
+╭---------------------------+------------------+------------------+---------------+----------------╮
+| File                      | % Lines          | % Statements     | % Branches    | % Funcs        |
++==================================================================================================+
+| script/DeployRaffle.s.sol | 89.47% (17/19)   | 95.65% (22/23)   | 100.00% (1/1) | 50.00% (1/2)   |
+|---------------------------+------------------+------------------+---------------+----------------|
+| script/HelperConfig.s.sol | 80.95% (17/21)   | 90.00% (18/20)   | 40.00% (2/5)  | 60.00% (3/5)   |
+|---------------------------+------------------+------------------+---------------+----------------|
+| script/Interactions.s.sol | 49.06% (26/53)   | 48.98% (24/49)   | 50.00% (1/2)  | 33.33% (3/9)   |
+|---------------------------+------------------+------------------+---------------+----------------|
+| src/Raffle.sol            | 92.31% (48/52)   | 93.88% (46/49)   | 60.00% (3/5)  | 90.00% (9/10)  |
+|---------------------------+------------------+------------------+---------------+----------------|
+| test/mocks/LinkToken.sol  | 11.76% (2/17)    | 7.69% (1/13)     | 0.00% (0/1)   | 20.00% (1/5)   |
+|---------------------------+------------------+------------------+---------------+----------------|
+| Total                     | 67.90% (110/162) | 72.08% (111/154) | 50.00% (7/14) | 54.84% (17/31) |
+╰---------------------------+------------------+------------------+---------------+----------------╯
