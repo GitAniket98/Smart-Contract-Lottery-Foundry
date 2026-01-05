@@ -15,4 +15,11 @@ fs_permissions = [
 [fuzz]
 runs = 512
 
+[fmt]
+line_length = 120
+MultilineFuncHeaderStyle = true
+tab_width = 4
+bracket_spacing = true
+wrap_comments = true
+
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

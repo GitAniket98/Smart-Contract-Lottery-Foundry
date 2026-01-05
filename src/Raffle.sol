@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
-import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
+import { VRFConsumerBaseV2Plus } from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
+import { VRFV2PlusClient } from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 
 contract Raffle is VRFConsumerBaseV2Plus {
     error Raffle__NotEnoughETHEntered();
@@ -105,7 +105,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
             numWords: NUM_WORDS,
             extraArgs: VRFV2PlusClient._argsToBytes(
                 // Set nativePayment to true to pay for VRF requests with Sepolia ETH instead of LINK
-                VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
+                VRFV2PlusClient.ExtraArgsV1({ nativePayment: false })
             )
         });
 
@@ -115,7 +115,11 @@ contract Raffle is VRFConsumerBaseV2Plus {
         emit RequestedRaffleWinner(requestId);
     }
 
-    function fulfillRandomWords(uint256, /*requestId*/ uint256[] calldata randomWords) internal virtual override {
+    function fulfillRandomWords(
+        uint256,
+        /*requestId*/
+        uint256[] calldata randomWords
+    ) internal virtual override {
         uint256 indexOfWinner = randomWords[0] % s_players.length;
         address payable recentWinner = s_players[indexOfWinner];
         s_recentWinner = recentWinner;
@@ -123,7 +127,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
         s_players = new address payable[](0);
         s_lastTimeStamp = block.timestamp;
 
-        (bool success,) = recentWinner.call{value: address(this).balance}("");
+        (bool success,) = recentWinner.call{ value: address(this).balance }("");
         if (!success) {
             revert Raffle__TransferFailed();
         }
