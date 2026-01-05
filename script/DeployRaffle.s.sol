@@ -14,27 +14,20 @@ contract DeployRaffle is Script {
     function deployContract() public returns (Raffle, HelperConfig) {
         HelperConfig helperConfig = new HelperConfig();
 
-        HelperConfig.NetworkConfig memory networkConfig = helperConfig
-            .getConfig();
+        HelperConfig.NetworkConfig memory networkConfig = helperConfig.getConfig();
 
         if (networkConfig.subscriptionId == 0) {
             // Create subscription
             CreateSubscription createSubscription = new CreateSubscription();
-            (
-                uint256 subscriptionId,
-                address vrfCoordinator
-            ) = createSubscription.createSubscription(
-                    networkConfig.vrfCoordinator
-                );
+            (uint256 subscriptionId, address vrfCoordinator) =
+                createSubscription.createSubscription(networkConfig.vrfCoordinator);
             networkConfig.subscriptionId = subscriptionId;
             networkConfig.vrfCoordinator = vrfCoordinator;
 
             // Fund subscription
             FundSubscription fundSubscription = new FundSubscription();
             fundSubscription.fundSubscription(
-                networkConfig.vrfCoordinator,
-                networkConfig.subscriptionId,
-                networkConfig.link
+                networkConfig.vrfCoordinator, networkConfig.subscriptionId, networkConfig.link
             );
         }
 
@@ -50,11 +43,7 @@ contract DeployRaffle is Script {
         vm.stopBroadcast();
         // Add consumer
         AddConsumer addConsumer = new AddConsumer();
-        addConsumer.addConsumer(
-            networkConfig.vrfCoordinator,
-            networkConfig.subscriptionId,
-            address(raffle)
-        );
+        addConsumer.addConsumer(networkConfig.vrfCoordinator, networkConfig.subscriptionId, address(raffle));
         return (raffle, helperConfig);
     }
 }
